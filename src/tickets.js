@@ -7,6 +7,11 @@ import path from 'node:path';
 export const pendingDir = (repo) => path.join(repo, '.deepseeker-code', 'batch', 'pending');
 export const doneDir = (repo) => path.join(repo, '.deepseeker-code', 'batch', 'done');
 
+// Per-ticket caps written into the frontmatter. `scan` overrides them with
+// --budget-yuan / --timeout-min; these are the defaults when it does not.
+export const DEFAULT_BUDGET_YUAN = 0.3;
+export const DEFAULT_TIMEOUT_MIN = 15;
+
 const slug = (s) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 32) || 'chore';
 
@@ -59,10 +64,12 @@ const HYGIENE_TICKETS = {
   },
 };
 
-export const findingToTicket = (root, f, i) => {
+export const findingToTicket = (root, f, i, caps = {}) => {
+  const budgetYuan = caps.budgetYuan ?? DEFAULT_BUDGET_YUAN;
+  const timeoutMin = caps.timeoutMin ?? DEFAULT_TIMEOUT_MIN;
   if (f.kind === 'hygiene') {
     const h = HYGIENE_TICKETS[f.id];
-    return { id: `ls-${i + 1}-${f.id}`, title: h.title, accept: h.accept(), body: h.body };
+    return { id: `ls-${i + 1}-${f.id}`, title: h.title, accept: h.accept(), body: h.body, budgetYuan, timeoutMin };
   }
   return {
     id: `ls-${i + 1}-${slug(f.snippet)}`,
@@ -77,28 +84,29 @@ export const findingToTicket = (root, f, i) => {
       'scope — replace the marker with a one-line note explaining the decision.',
       'Touch nothing unrelated to this marker.',
     ].join('\n'),
+    budgetYuan,
+    timeoutMin,
   };
 };
 
-// TODO: let --budget-yuan / --timeout-min CLI flags override the per-ticket defaults
 export const renderTicketMd = (t) =>
   [
     '---',
     `title: ${t.title}`,
     `accept: ${t.accept}`,
-    'budget-yuan: 0.3',
-    'timeout-min: 15',
+    `budget-yuan: ${t.budgetYuan ?? DEFAULT_BUDGET_YUAN}`,
+    `timeout-min: ${t.timeoutMin ?? DEFAULT_TIMEOUT_MIN}`,
     '---',
     '',
     t.body,
     '',
   ].join('\n');
 
-export const writeTickets = (repo, findings) => {
+export const writeTickets = (repo, findings, caps = {}) => {
   const dir = pendingDir(repo);
   fs.mkdirSync(dir, { recursive: true });
   return findings.map((f, i) => {
-    const t = findingToTicket(repo, f, i);
+    const t = findingToTicket(repo, f, i, caps);
     const file = path.join(dir, `${t.id}.md`);
     fs.writeFileSync(file, renderTicketMd(t));
     return file;

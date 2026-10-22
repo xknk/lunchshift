@@ -8,19 +8,27 @@ const mdFiles = (dir) =>
   fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.md')).sort() : [];
 
 const frontmatterTitle = (md) => (md.match(/^title:\s*(.+)$/m) || [])[1] || '(untitled)';
+// The batch runner stamps every done report with `status:`; only `passed` is a pass.
+const frontmatterStatus = (md) => (md.match(/^status:\s*(.+?)\s*$/m) || [])[1] || '';
 
 export const printReport = (repo) => {
   const pending = mdFiles(pendingDir(repo));
-  const done = mdFiles(doneDir(repo));
+  const all = mdFiles(doneDir(repo));
+  // a ticket file is superseded by its `.report.md` twin once the runner writes one
+  const superseded = new Set(
+    all.filter((f) => f.endsWith('.report.md')).map((f) => f.replace(/\.report\.md$/, '.md')),
+  );
+  const done = all.filter((f) => !superseded.has(f));
 
   console.log(`pending tickets: ${pending.length}`);
   pending.forEach((f) => console.log(`  - ${f}`));
   console.log(`done reports: ${done.length}`);
   done.forEach((f) => {
     const md = fs.readFileSync(path.join(doneDir(repo), f), 'utf8');
-    console.log(`  - ${f.replace(/\.md$/, '')} — ${frontmatterTitle(md)}`);
+    const verdict = frontmatterStatus(md) === 'passed' ? '[pass]' : '[FAIL]';
+    const label = f.replace(/\.report\.md$/, '').replace(/\.md$/, '');
+    console.log(`  - ${verdict} ${label} — ${frontmatterTitle(md)}`);
   });
-  // Per-ticket verdicts are omitted: done reports define no verdict field to parse
   console.log(
     done.length
       ? 'full text in .deepseeker-code/batch/done/'
