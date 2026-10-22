@@ -80,6 +80,7 @@ export const findingToTicket = (root, f, i) => {
   };
 };
 
+// TODO: let --budget-yuan / --timeout-min CLI flags override the per-ticket defaults
 export const renderTicketMd = (t) =>
   [
     '---',
