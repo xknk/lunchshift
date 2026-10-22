@@ -1,0 +1,28 @@
+{
+  "name": "lunchshift",
+  "version": "0.1.0",
+  "description": "Give your repo the lunch shift: scan for chores, hand them to an open-source coding agent, come back to a tidy worktree.",
+  "type": "module",
+  "bin": {
+    "lunchshift": "bin/lunchshift.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "author": "xknk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xknk/lunchshift.git"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "code-review",
+    "developer-tools",
+    "deepseek"
+  ]
+}
