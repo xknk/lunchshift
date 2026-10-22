@@ -20,7 +20,7 @@ export const printReport = (repo) => {
     const md = fs.readFileSync(path.join(doneDir(repo), f), 'utf8');
     console.log(`  - ${f.replace(/\.md$/, '')} — ${frontmatterTitle(md)}`);
   });
-  // FIXME: surface per-ticket verdict lines once the report format settles
+  // Per-ticket verdicts are omitted: done reports define no verdict field to parse
   console.log(
     done.length
       ? 'full text in .deepseeker-code/batch/done/'
